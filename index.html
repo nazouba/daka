@@ -2046,12 +2046,37 @@ App.Sync = {
       return null;
     }catch(e){return null;}
   },
+  async _gzip(text){
+    const blob=new Blob([text],{type:'application/json'});
+    const stream=blob.stream().pipeThrough(new CompressionStream('gzip'));
+    const buf=await new Response(stream).arrayBuffer();
+    const bytes=new Uint8Array(buf);
+    let bin='';
+    for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return {b64:btoa(bin), rawSize:text.length, gzSize:bytes.length};
+  },
+  async _gunzip(b64){
+    const bin=atob(b64);
+    const bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    const stream=new Response(bytes).body.pipeThrough(new DecompressionStream('gzip'));
+    const buf=await new Response(stream).arrayBuffer();
+    return new TextDecoder().decode(buf);
+  },
   async push(){
     const token=this.getToken();
     if(!token){App.Utils.toast('请先填写并保存 GitHub Token','error');return;}
     const data=this.gather();
-    const content=JSON.stringify(data);
-    if(content.length>900000){App.Utils.toast('数据超过 Gist 1MB 限制，请先精简知识库','error');return;}
+    const rawJson=JSON.stringify(data);
+    let content, rawSize=rawJson.length, gzSize=rawJson.length;
+    try{
+      const info=await this._gzip(rawJson);
+      content=info.b64; gzSize=info.gzSize;
+    }catch(e){
+      content=rawJson;
+      App.Utils.toast('当前浏览器不支持压缩，已按明文上传','info');
+    }
+    if(content.length>900000){App.Utils.toast('压缩后仍超 1MB（原始 '+rawSize+' B → 压缩 '+gzSize+' B），请精简知识库','error');return;}
     let gistId=this.getGistId();
     if(!gistId){gistId=await this.findGist(token); if(gistId)this.setGistId(gistId);}
     const headers={'Authorization':'Bearer '+token,'Content-Type':'application/json','Accept':'application/vnd.github+json'};
@@ -2065,7 +2090,8 @@ App.Sync = {
       this.setGistId(g.id);
       localStorage.setItem(this.LAST_KEY,new Date().toLocaleString());
       const st=document.getElementById('sync-status'); if(st)st.textContent=this.statusText();
-      App.Utils.toast('已上传到云端 ☁️','success');
+      const ratio=gzSize?Math.max(0,Math.round((1-gzSize/rawSize)*100)):0;
+      App.Utils.toast('已上传到云端 ☁️（'+(rawJson===content?'明文':'压缩 '+ratio+'%')+'）','success');
     }catch(err){App.Utils.toast('上传出错：'+err.message,'error');}
   },
   async pull(){
@@ -2080,7 +2106,15 @@ App.Sync = {
       const g=await resp.json();
       const file=g.files&&g.files[this.SYNC_FILE];
       if(!file){App.Utils.toast('云端备份文件缺失','error');return;}
-      const data=JSON.parse(file.content);
+      const raw=file.content||'';
+      let json;
+      if(raw.trimStart().startsWith('{')){
+        json=raw;
+      }else{
+        try{json=await this._gunzip(raw);}
+        catch(e){App.Utils.toast('云端数据解压失败：'+e.message,'error');return;}
+      }
+      const data=JSON.parse(json);
       Object.keys(data).forEach(k=>{ if(k.startsWith('dlp_'))localStorage.setItem(k,JSON.stringify(data[k])); });
       localStorage.setItem(this.LAST_KEY,new Date().toLocaleString());
       const st=document.getElementById('sync-status'); if(st)st.textContent=this.statusText();
