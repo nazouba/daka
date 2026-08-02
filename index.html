@@ -2061,7 +2061,7 @@ App.Sync = {
       content=rawJson;
       App.Utils.toast('压缩库未加载，已按明文上传','error');
     }
-    if(content.length>900000){
+    if(cmpSize>950000){
       App.Utils.toast('压缩后仍超 1MB（原始 '+rawSize+' B → 压缩 '+cmpSize+' B），请精简知识库','error');
       return;
     }
