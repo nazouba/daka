@@ -2061,7 +2061,7 @@ App.Sync = {
       return fallback?fallback.id:null;
     }catch(e){return null;}
   },
-  CHUNK:750000, // 每个分片文件的字符数（base64 为 ASCII，1 字符=1 字节，远低于 Gist 1MB 限制）
+  CHUNK:400000, // 每个分片文件的字符数；保持低于 GitHub Gist API ~512KB 截断阈值，避免 content 字段被截断
   // 把整个数据对象压缩成 base64 字符串，再切成固定长度的字符串分片。
   // base64 全部是 ASCII，所以在任意字符边界切分都安全，不存在 UTF-8 字节被切断的问题。
   _encode(data){
@@ -2165,9 +2165,18 @@ App.Sync = {
         const parts=[];
         let missing=-1;
         for(let i=0;i<N;i++){
-          const cf=fileMap['dlp_sync_'+i+'.json'];
-          if(!cf || cf.content==null){missing=i;break;}
-          parts.push(cf.content||'');
+          let cf=fileMap['dlp_sync_'+i+'.json'];
+          if(!cf){missing=i;break;}
+          let content=cf.content;
+          // GitHub Gist API 对 >~512KB 的文件会把 content 截断，此时必须改去拉 raw_url 拿完整内容
+          if(cf.truncated && cf.raw_url){
+            try{
+              const rr=await fetch(cf.raw_url,{headers:{'Authorization':'Bearer '+token}});
+              if(rr.ok) content=await rr.text();
+            }catch(e){}
+          }
+          if(content==null){missing=i;break;}
+          parts.push(content||'');
         }
         if(missing>=0){lastDiag='gist '+gistId.slice(0,8)+' 缺分片 '+missing;continue;}
         let data;
