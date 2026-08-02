@@ -2042,10 +2042,12 @@ App.Sync = {
     try{
       const r=await fetch('https://api.github.com/gists',{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
       if(!r.ok)return null;
-      const list=await r.json();
-      if(!Array.isArray(list))return null;
-      for(const g of list){ if(g.files&&g.files[this.SYNC_FILE])return g.id; }
-      return null;
+const list=await r.json();
+    if(!Array.isArray(list))return null;
+    // 多个含 meta 的 Gist 时，按更新时间倒序选最新的，避免挑到旧残留
+    list.sort((a,b)=>(new Date(b.updated_at||0))-(new Date(a.updated_at||0)));
+    for(const g of list){ if(g.files&&g.files[this.SYNC_FILE])return g.id; }
+    return null;
     }catch(e){return null;}
   },
   CHUNK:750000, // 每个分片文件的字符数（base64 为 ASCII，1 字符=1 字节，远低于 Gist 1MB 限制）
@@ -2118,7 +2120,8 @@ App.Sync = {
       if(!metaF){App.Utils.toast('云端备份文件缺失','error');return;}
       let meta;
       try{meta=JSON.parse(metaF.content||'{}');}catch(e){App.Utils.toast('云端元数据损坏','error');return;}
-      if(!meta||meta.v!==3||typeof meta.chunks!=='number'){App.Utils.toast('云端备份版本不兼容，请重新上传','error');return;}
+      if(!meta||typeof meta.chunks!=='number'){App.Utils.toast('云端元数据损坏','error');return;}
+      if(meta.v!==3){App.Utils.toast('提示：云端版本 v'+(meta.v||'?')+'，仍尝试解码恢复','info');}
       const parts=[];
       for(let i=0;i<meta.chunks;i++){
         const cf=fileMap['dlp_sync_'+i+'.json'];
