@@ -1973,6 +1973,16 @@ App.Renderer = {
           <button class="btn btn-secondary" onclick="App.ParentPanel.resetFarm()" style="margin-bottom:8px">🌱 清除当前用户种植田</button>
           <button class="btn btn-secondary" onclick="App.ParentPanel.resetPets()" style="margin-bottom:8px">🐾 重置当前用户宠物</button>
           <div class="section-card">
+            <div style="font-size:13px;font-weight:bold;margin-bottom:6px">☁️ 云同步（GitHub Gist）</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">平板/手机填<b>同一个 Token</b>即可互相同步，免去导出导入。Token 仅需 gist 权限。</div>
+            <div class="form-group"><input type="password" id="sync-token" placeholder="粘贴 GitHub Token（仅 gist 权限）" style="width:100%"></div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">获取：github.com → 右上角头像 → Settings → Developer settings → Personal access tokens → Generate new token → 勾选 <b>gist</b></div>
+            <div style="font-size:12px;margin-bottom:6px;color:var(--mc-sky-dark)" id="sync-status">${App.Sync.statusText()}</div>
+            <button class="btn btn-primary" onclick="App.Sync.saveToken()" style="margin-bottom:6px">保存 Token</button>
+            <button class="btn btn-secondary" onclick="App.Sync.push()" style="margin-bottom:6px">☁️ 上传备份</button>
+            <button class="btn btn-secondary" onclick="App.Sync.pull()" style="margin-bottom:6px">☁️ 从云恢复</button>
+          </div>
+          <div class="section-card">
             <div style="font-size:13px;font-weight:bold;margin-bottom:6px">修改家长密码</div>
             <div class="form-group"><input type="password" id="new-parent-pwd" placeholder="新密码"></div>
             <button class="btn btn-primary" onclick="App.ParentPanel.changePassword()">确认修改</button>
@@ -1993,6 +2003,91 @@ App.Renderer = {
     if(route==='knowledge'){App.Knowledge.initPage();}
     if(route==='farm'){App.Farm.afterRender();}
   },
+};
+
+/* ===== 云同步（GitHub Gist，免后端） ===== */
+App.Sync = {
+  TOKEN_KEY:'dlp_sync_token', GIST_KEY:'dlp_sync_gistid', LAST_KEY:'dlp_sync_last', SYNC_FILE:'dlp_sync.json',
+  getToken(){return localStorage.getItem(this.TOKEN_KEY)||'';},
+  setToken(t){ if(t&&t.trim()){localStorage.setItem(this.TOKEN_KEY,t.trim());} },
+  getGistId(){return localStorage.getItem(this.GIST_KEY)||'';},
+  setGistId(id){ if(id){localStorage.setItem(this.GIST_KEY,id);} else {localStorage.removeItem(this.GIST_KEY);} },
+  statusText(){
+    const id=this.getGistId(), last=localStorage.getItem(this.LAST_KEY);
+    let s=this.getToken()?'已保存 Token；':'未保存 Token；';
+    s+=id?('已连接云端(Gist '+id.slice(0,8)+'…)'):'未连接云端';
+    if(last)s+='　上次：'+last;
+    return s;
+  },
+  saveToken(){
+    const v=document.getElementById('sync-token');
+    if(!v||!v.value.trim()){App.Utils.toast('请输入 Token（留空不修改）','error');return;}
+    this.setToken(v.value);
+    App.Utils.toast('Token 已保存','success');
+    const st=document.getElementById('sync-status'); if(st)st.textContent=this.statusText();
+  },
+  gather(){
+    const all={};
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k.startsWith('dlp_')&&k!==this.TOKEN_KEY&&k!==this.GIST_KEY&&k!==this.LAST_KEY){
+        try{all[k]=JSON.parse(localStorage.getItem(k));}catch(e){}
+      }
+    }
+    return App.ParentPanel._stripBlobs(all);
+  },
+  async findGist(token){
+    try{
+      const r=await fetch('https://api.github.com/gists',{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
+      if(!r.ok)return null;
+      const list=await r.json();
+      if(!Array.isArray(list))return null;
+      for(const g of list){ if(g.files&&g.files[this.SYNC_FILE])return g.id; }
+      return null;
+    }catch(e){return null;}
+  },
+  async push(){
+    const token=this.getToken();
+    if(!token){App.Utils.toast('请先填写并保存 GitHub Token','error');return;}
+    const data=this.gather();
+    const content=JSON.stringify(data);
+    if(content.length>900000){App.Utils.toast('数据超过 Gist 1MB 限制，请先精简知识库','error');return;}
+    let gistId=this.getGistId();
+    if(!gistId){gistId=await this.findGist(token); if(gistId)this.setGistId(gistId);}
+    const headers={'Authorization':'Bearer '+token,'Content-Type':'application/json','Accept':'application/vnd.github+json'};
+    let url,method,body;
+    if(gistId){url='https://api.github.com/gists/'+gistId;method='PATCH';body={files:{[this.SYNC_FILE]:{content:content}}};}
+    else{url='https://api.github.com/gists';method='POST';body={description:'双娃学习打卡平台 云同步备份',public:false,files:{[this.SYNC_FILE]:{content:content}}};}
+    try{
+      const resp=await fetch(url,{method:method,headers:headers,body:JSON.stringify(body)});
+      if(!resp.ok){const e=await resp.json().catch(()=>({}));App.Utils.toast('上传失败：'+(e.message||resp.status),'error');return;}
+      const g=await resp.json();
+      this.setGistId(g.id);
+      localStorage.setItem(this.LAST_KEY,new Date().toLocaleString());
+      const st=document.getElementById('sync-status'); if(st)st.textContent=this.statusText();
+      App.Utils.toast('已上传到云端 ☁️','success');
+    }catch(err){App.Utils.toast('上传出错：'+err.message,'error');}
+  },
+  async pull(){
+    const token=this.getToken();
+    if(!token){App.Utils.toast('请先填写并保存 GitHub Token','error');return;}
+    let gistId=this.getGistId();
+    if(!gistId){gistId=await this.findGist(token); if(gistId)this.setGistId(gistId);}
+    if(!gistId){App.Utils.toast('云端还没有备份，请先在一台设备上传','error');return;}
+    try{
+      const resp=await fetch('https://api.github.com/gists/'+gistId,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
+      if(!resp.ok){App.Utils.toast('下载失败：'+resp.status,'error');return;}
+      const g=await resp.json();
+      const file=g.files&&g.files[this.SYNC_FILE];
+      if(!file){App.Utils.toast('云端备份文件缺失','error');return;}
+      const data=JSON.parse(file.content);
+      Object.keys(data).forEach(k=>{ if(k.startsWith('dlp_'))localStorage.setItem(k,JSON.stringify(data[k])); });
+      localStorage.setItem(this.LAST_KEY,new Date().toLocaleString());
+      const st=document.getElementById('sync-status'); if(st)st.textContent=this.statusText();
+      App.Init.start();
+      App.Utils.toast('已从云端恢复 ☁️','success');
+    }catch(err){App.Utils.toast('下载出错：'+err.message,'error');}
+  }
 };
 
 /* ===== 日历组件 ===== */
@@ -4586,11 +4681,23 @@ App.ParentPanel = {
       const key=localStorage.key(i);
       if(key.startsWith('dlp_')){try{allData[key]=JSON.parse(localStorage.getItem(key));}catch(e){}}
     }
-    const blob=new Blob([JSON.stringify(allData,null,2)],{type:'application/json'});
+    const cleaned=this._stripBlobs(allData);
+    const blob=new Blob([JSON.stringify(cleaned,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download='dlp_backup_'+App.Utils.todayStr()+'.json';a.click();
     URL.revokeObjectURL(url);
-    App.Utils.toast('数据已导出','success');
+    App.Utils.toast('数据已导出（已自动精简头像等大文件，便于手机导入）','success');
+  },
+  // 递归剔除 base64 头像等大体积字段，避免备份文件过大导致手机端无法导入
+  _stripBlobs(obj){
+    if(typeof obj!=='object'||obj===null)return obj;
+    if(Array.isArray(obj))return obj.map(it=>this._stripBlobs(it));
+    const out={};
+    for(const k in obj){
+      if(k==='avatarImage'||k==='avatar')continue;
+      out[k]=this._stripBlobs(obj[k]);
+    }
+    return out;
   },
   openImportData(){
     App.Renderer.openModal(`
