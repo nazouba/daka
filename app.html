@@ -2108,33 +2108,70 @@ const list=await r.json();
   async pull(){
     const token=this.getToken();
     if(!token){App.Utils.toast('请先填写并保存 GitHub Token','error');return;}
-    let gistId=this.getGistId();
-    if(!gistId){gistId=await this.findGist(token);if(gistId)this.setGistId(gistId);}
-    if(!gistId){App.Utils.toast('云端还没有备份，请先在一台设备上传','error');return;}
+    // 收集候选 gist：已保存 → 最新(含meta) → 全部
+    const cand=[];
+    const saved=this.getGistId();
+    if(saved) cand.push(saved);
     try{
-      const resp=await fetch('https://api.github.com/gists/'+gistId,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
-      if(!resp.ok){App.Utils.toast('下载失败：'+resp.status,'error');return;}
-      const g=await resp.json();
-      const fileMap=g.files||{};
-      const metaF=fileMap[this.SYNC_FILE];
-      if(!metaF){App.Utils.toast('云端备份文件缺失','error');return;}
-      let meta;
-      try{meta=JSON.parse(metaF.content||'{}');}catch(e){App.Utils.toast('云端元数据损坏','error');return;}
-      if(!meta||typeof meta.chunks!=='number'){App.Utils.toast('云端元数据损坏','error');return;}
-      if(meta.v!==3){App.Utils.toast('提示：云端版本 v'+(meta.v||'?')+'，仍尝试解码恢复','info');}
-      const parts=[];
-      for(let i=0;i<meta.chunks;i++){
-        const cf=fileMap['dlp_sync_'+i+'.json'];
-        if(!cf||cf.content==null){App.Utils.toast('云端分片 '+i+' 缺失','error');return;}
-        parts.push(cf.content||'');
+      const fg=await this.findGist(token);
+      if(fg && !cand.includes(fg)) cand.push(fg);
+    }catch(e){}
+    try{
+      const lr=await fetch('https://api.github.com/gists?per_page=100',{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
+      if(lr.ok){
+        const list=await lr.json();
+        if(Array.isArray(list)){
+          list.sort((a,b)=>(new Date(b.updated_at||0))-(new Date(a.updated_at||0)));
+          list.forEach(g=>{ if(g && g.id && !cand.includes(g.id)) cand.push(g.id); });
+        }
       }
-      const data=this._decode(parts);
-      Object.keys(data).forEach(k=>{if(k.startsWith('dlp_'))localStorage.setItem(k,JSON.stringify(data[k]));});
-      localStorage.setItem(this.LAST_KEY,new Date().toLocaleString());
-      const st=document.getElementById('sync-status');if(st)st.textContent=this.statusText();
-      App.Init.start();
-      App.Utils.toast('已从云端恢复 ☁️','success');
-    }catch(err){App.Utils.toast('下载出错：'+err.message,'error');}
+    }catch(e){}
+    if(!cand.length){App.Utils.toast('云端还没有备份，请先在一台设备上传','error');return;}
+
+    let lastDiag='';
+    for(const gistId of cand){
+      try{
+        const resp=await fetch('https://api.github.com/gists/'+gistId,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
+        if(!resp.ok){lastDiag='gist '+gistId.slice(0,8)+' HTTP '+resp.status;continue;}
+        const g=await resp.json();
+        const fileMap=g.files||{};
+        const metaF=fileMap[this.SYNC_FILE];
+        // 从文件名枚举 chunk（meta 损坏时的兜底）
+        const chunkKeys=Object.keys(fileMap).filter(k=>/^dlp_sync_\d+\.json$/.test(k));
+        let N=null, parseErr='', v=null, usedFallback=false;
+        if(metaF){
+          let meta=null;
+          try{meta=JSON.parse(metaF.content||'{}');}catch(e){parseErr=e.message;}
+          if(meta && typeof meta.chunks==='number'){ N=meta.chunks; v=meta.v; }
+        }
+        if(N==null && chunkKeys.length){
+          let maxI=-1;
+          chunkKeys.forEach(k=>{ const m=k.match(/^dlp_sync_(\d+)\.json$/); if(m){ const i=parseInt(m[1],10); if(i>maxI) maxI=i; } });
+          if(maxI>=0){ N=maxI+1; usedFallback=true; }
+        }
+        if(N==null || N<1){lastDiag='gist '+gistId.slice(0,8)+' 无可用分片';continue;}
+        if(v!=null && v!==3) App.Utils.toast('提示：云端版本 v'+v+'，仍尝试解码','info');
+        else if(usedFallback) App.Utils.toast('提示：云端 meta 不可用，已从文件名推断 N='+N,'info');
+        const parts=[];
+        let missing=-1;
+        for(let i=0;i<N;i++){
+          const cf=fileMap['dlp_sync_'+i+'.json'];
+          if(!cf || cf.content==null){missing=i;break;}
+          parts.push(cf.content||'');
+        }
+        if(missing>=0){lastDiag='gist '+gistId.slice(0,8)+' 缺分片 '+missing;continue;}
+        let data;
+        try{data=this._decode(parts);}catch(e){lastDiag='gist '+gistId.slice(0,8)+' 解码失败: '+e.message;continue;}
+        this.setGistId(gistId);
+        Object.keys(data).forEach(k=>{if(k.startsWith('dlp_'))localStorage.setItem(k,JSON.stringify(data[k]));});
+        localStorage.setItem(this.LAST_KEY,new Date().toLocaleString());
+        const st=document.getElementById('sync-status');if(st)st.textContent=this.statusText();
+        App.Init.start();
+        App.Utils.toast('已从云端恢复 ☁️','success');
+        return;
+      }catch(err){lastDiag='gist '+gistId.slice(0,8)+' '+err.message;continue;}
+    }
+    App.Utils.toast('所有云端候选均不可用：'+lastDiag.slice(0,120),'error');
   }
 };
 
