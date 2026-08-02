@@ -2042,12 +2042,23 @@ App.Sync = {
     try{
       const r=await fetch('https://api.github.com/gists',{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
       if(!r.ok)return null;
-const list=await r.json();
-    if(!Array.isArray(list))return null;
-    // 多个含 meta 的 Gist 时，按更新时间倒序选最新的，避免挑到旧残留
-    list.sort((a,b)=>(new Date(b.updated_at||0))-(new Date(a.updated_at||0)));
-    for(const g of list){ if(g.files&&g.files[this.SYNC_FILE])return g.id; }
-    return null;
+      const list=await r.json();
+      if(!Array.isArray(list))return null;
+      list.sort((a,b)=>(new Date(b.updated_at||0))-(new Date(a.updated_at||0)));
+      // 优先选含"合法 meta"的备份；否则选"分片文件最多"的（无视 meta 是否损坏）。
+      // 这样无论云端 meta 是否损坏，手机/平板都会收敛到同一份 Gist，避免各用各的导致恢复失败。
+      let fallback=null, bestChunks=-1;
+      for(const g of list){
+        if(!g.files) continue;
+        let metaOk=false, c=0;
+        for(const k of Object.keys(g.files)){
+          if(k===this.SYNC_FILE){ try{ const m=JSON.parse(g.files[k].content||'{}'); if(m&&typeof m.chunks==='number') metaOk=true; }catch(e){} }
+          if(/^dlp_sync_\d+\.json$/.test(k)) c++;
+        }
+        if(metaOk) return g.id;
+        if(c>bestChunks){ bestChunks=c; fallback=g; }
+      }
+      return fallback?fallback.id:null;
     }catch(e){return null;}
   },
   CHUNK:750000, // 每个分片文件的字符数（base64 为 ASCII，1 字符=1 字节，远低于 Gist 1MB 限制）
@@ -2085,8 +2096,7 @@ const list=await r.json();
         if(gr.ok){
           const gj=await gr.json();
           for(const f of Object.keys(gj.files||{})){
-            const m=f.match(/^dlp_sync_(\d+)\.json$/);
-            if(m&&parseInt(m[1],10)>=N) files[f]=null;
+            if(/^dlp_sync_\d+\.json$/.test(f)) files[f]=null; // 清掉所有旧分片，避免新旧混杂导致解压失败
           }
         }
       }catch(e){}
