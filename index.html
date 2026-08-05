@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>双娃学习打卡平台</title>
 <style>
-/* Emoji 字体回退方案 */
-@import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Color+Emoji&display=swap');
+/* 说明：为兼容中国大陆网络，已移除 Google Fonts 外链（@import 会阻塞渲染），
+   统一回退到系统字体（微软雅黑/苹方/系统 emoji），加载更快、离线可用 */
 
 /* ============ 1. CSS 变量与主题 ============ */
 :root{
@@ -360,6 +360,100 @@ img{max-width:100%}
 .q-answer{font-size:12px;color:var(--mc-grass-dark);font-weight:bold}
 .parent-action-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 
+/* ---- 9.1 习题库工具栏 / 年级折叠 / 字号缩放 ---- */
+.qb-toolbar{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;
+  padding:8px 10px;background:var(--bg-card-2);border:2px solid var(--mc-dirt-dark);
+  border-radius:var(--radius-sm);
+}
+.qb-toolbar .qb-tb-label{font-size:12px;color:var(--text-secondary);font-weight:bold}
+.qb-mini-btn{
+  padding:5px 10px;font-size:12px;font-weight:bold;border-radius:6px;cursor:pointer;
+  background:#fff;border:2px solid var(--mc-dirt-dark);color:var(--text-primary);
+}
+.qb-mini-btn:hover{border-color:var(--theme-color);color:var(--theme-color)}
+.qb-mini-btn:active{transform:translateY(1px)}
+.qb-zoom-val{font-size:12px;font-weight:bold;color:var(--theme-color);min-width:42px;text-align:center}
+.qb-practice-btn{
+  padding:5px 12px;font-size:12px;font-weight:bold;border-radius:6px;cursor:pointer;
+  background:var(--mc-gold,#FFB300);border:2px solid #B77E00;color:#4a3200;
+}
+.qb-practice-btn:hover{filter:brightness(1.08)}
+.qb-practice-btn:active{transform:translateY(1px)}
+
+#qb-lesson-list{--qbz:1}
+#qb-lesson-list .grade-header{font-size:calc(15px * var(--qbz));padding:calc(6px * var(--qbz)) calc(12px * var(--qbz));cursor:pointer;user-select:none;gap:8px}
+#qb-lesson-list .grade-header:hover{filter:brightness(1.08)}
+#qb-lesson-list .grade-meta{font-size:calc(11px * var(--qbz))}
+#qb-lesson-list .grade-arrow{font-size:calc(12px * var(--qbz));transition:transform .18s;display:inline-block}
+#qb-lesson-list .grade-group.collapsed .grade-arrow{transform:rotate(-90deg)}
+#qb-lesson-list .grade-group.collapsed .grade-body{display:none}
+#qb-lesson-list .grade-head-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+#qb-lesson-list .grade-head-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+#qb-lesson-list .lesson-item{padding:calc(10px * var(--qbz)) calc(14px * var(--qbz))}
+#qb-lesson-list .lesson-title{font-size:calc(14px * var(--qbz))}
+#qb-lesson-list .lesson-count{font-size:calc(12px * var(--qbz))}
+#qb-lesson-list .q-content{font-size:calc(14px * var(--qbz))}
+#qb-lesson-list .q-option{font-size:calc(13px * var(--qbz))}
+#qb-lesson-list .q-answer{font-size:calc(12px * var(--qbz))}
+#qb-lesson-list .lesson-text{font-size:calc(13px * var(--qbz))}
+.lesson-item-row{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.lesson-text{
+  padding:10px 12px;margin-bottom:8px;background:#FFFDF3;border-radius:var(--radius-sm);
+  border-left:4px solid var(--mc-gold,#FFB300);white-space:pre-wrap;line-height:1.7;color:var(--text-primary);
+}
+.lesson-text-title{font-weight:bold;font-size:13px;color:#8a6d00;margin-bottom:6px}
+
+/* ---- 9.2 练习模式 ---- */
+.pr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
+.pr-title{font-size:16px;font-weight:bold;color:var(--text-primary)}
+.pr-counter{font-size:13px;font-weight:bold;color:var(--theme-color)}
+.pr-bar{height:10px;background:#E0E0E0;border-radius:6px;overflow:hidden;margin-bottom:12px}
+.pr-bar-fill{height:100%;background:var(--mc-grass-dark,#4CAF50);transition:width .25s}
+.pr-meta{font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+.pr-q{
+  padding:14px;background:var(--bg-card-2);border-radius:var(--radius-sm);
+  border-left:4px solid var(--theme-color);margin-bottom:12px;
+}
+.pr-q-text{font-size:16px;font-weight:bold;line-height:1.7;color:var(--text-primary);white-space:pre-wrap}
+.pr-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.pr-opt{
+  padding:11px 14px;background:#fff;border:2px solid var(--mc-dirt-dark);border-radius:8px;
+  font-size:15px;cursor:pointer;text-align:left;transition:all .12s;color:var(--text-primary);
+}
+.pr-opt:hover{border-color:var(--theme-color)}
+.pr-opt.sel{background:var(--theme-color);color:#fff;border-color:var(--theme-color)}
+.pr-opt.right{background:#C8E6C9;border-color:#2E7D32;color:#1B5E20;font-weight:bold}
+.pr-opt.wrong{background:#FFCDD2;border-color:#C62828;color:#B71C1C}
+.pr-input{
+  width:100%;padding:11px 12px;font-size:16px;border:2px solid var(--mc-dirt-dark);
+  border-radius:8px;font-family:inherit;box-sizing:border-box;
+}
+.pr-input:focus{outline:none;border-color:var(--theme-color)}
+.pr-fb{padding:11px 13px;border-radius:8px;margin-bottom:10px;font-size:14px;line-height:1.6}
+.pr-fb.ok{background:#C8E6C9;color:#1B5E20;border-left:4px solid #2E7D32}
+.pr-fb.no{background:#FFCDD2;color:#B71C1C;border-left:4px solid #C62828}
+.pr-fb b{font-size:15px}
+.pr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.pr-actions .btn{flex:1;min-width:110px}
+.pr-result{text-align:center;padding:10px 0}
+.pr-result-icon{font-size:52px;margin-bottom:6px}
+.pr-result-score{font-size:28px;font-weight:bold;color:var(--theme-color);margin-bottom:6px}
+.pr-result-line{font-size:14px;color:var(--text-secondary);margin-bottom:4px}
+.pr-reward{
+  display:inline-block;margin:10px 0;padding:8px 18px;background:#DCEDC8;border:2px solid #7CB342;
+  border-radius:20px;font-size:16px;font-weight:bold;color:#33691E;
+}
+.pr-scope-item{
+  display:flex;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:6px;
+  background:var(--bg-card-2);border:2px solid var(--mc-dirt-dark);border-radius:var(--radius-sm);cursor:pointer;
+}
+.pr-scope-item:hover{border-color:var(--theme-color)}
+.pr-scope-item.sel{border-color:var(--theme-color);background:#E8F5E9}
+.pr-modal{animation:none}
+.pr-opt[disabled]{cursor:default;opacity:1}
+.pr-input[disabled]{background:#f0f0f0;color:var(--text-secondary)}
+
 /* ============ 9.5 知识库 ============ */
 .kb-search-box{display:flex;gap:6px;margin-bottom:12px}
 .kb-search-box input{
@@ -682,8 +776,8 @@ img{max-width:100%}
 const App = {};
 
 /* ===== 版本信息（每次更新请同步修改 BUILD_DATE，便于核对文件是否为最新）===== */
-App.VERSION = 'v3.0';
-App.BUILD_DATE = '2026-07-30';
+App.VERSION = 'v3.1';
+App.BUILD_DATE = '2026-08-05';
 App.getVersionText = function(){ return '📦 '+this.VERSION+' · '+this.BUILD_DATE; };
 
 /* ===== 工具函数 ===== */
@@ -1081,6 +1175,20 @@ App.DataStore = {
     }
     this.saveMistakes(uid,mistakes);
   },
+  /* --- 习题练习记录（防重复刷小苗） --- */
+  getPracticeLog(uid){
+    let p=this.get('dlp_practice_'+uid);
+    const today=App.Utils.todayStr();
+    if(!p||p.date!==today){
+      const keep=p||{};
+      p={userId:uid,date:today,rewarded:{},rewardedCount:0,todayCorrect:0,todayWrong:0,
+         totalCorrect:keep.totalCorrect||0,totalWrong:keep.totalWrong||0,
+         totalSeedlings:keep.totalSeedlings||0,history:(keep.history||[]).slice(-30)};
+      this.set('dlp_practice_'+uid,p);
+    }
+    return p;
+  },
+  savePracticeLog(uid,p){this.set('dlp_practice_'+uid,p);},
   markMastered(uid,mistakeId){
     const mistakes=this.getMistakes(uid);
     const m=mistakes.mistakes.find(x=>x.mistakeId===mistakeId);
@@ -1276,6 +1384,9 @@ App.DataStore = {
     if(c.rules.weedAllToolCost===undefined)c.rules.weedAllToolCost=40;
     if(c.rules.bugAllToolCost===undefined)c.rules.bugAllToolCost=40;
     if(c.rules.healthDecayPerDay===undefined)c.rules.healthDecayPerDay=50;
+    if(c.rules.practiceCorrectReward===undefined)c.rules.practiceCorrectReward=2;
+    if(c.rules.practiceDailyRewardLimit===undefined)c.rules.practiceDailyRewardLimit=20;
+    if(c.rules.practiceQuestionCount===undefined)c.rules.practiceQuestionCount=10;
     return c;
   },
   initGameConfig(){
@@ -1290,6 +1401,7 @@ App.DataStore = {
         gamePlayCost:5,gamePlayDailyLimit:3,gameWinReward:3,
         cropProduceInterval:10800,cropProduceAmount:10,
         collectAllToolCost:50,weedAllToolCost:40,bugAllToolCost:40,healthDecayPerDay:50,
+        practiceCorrectReward:2,practiceDailyRewardLimit:20,practiceQuestionCount:10,
       }
     };
     this.set('dlp_game_config',c);
@@ -1532,6 +1644,18 @@ App.Renderer = {
             <div class="mod-icon">${m.emoji}</div><div class="mod-name">${m.name}</div>
           </div>`).join('')}
       </div>
+      ${(()=>{
+        const cfg=App.DataStore.getGameConfig().rules;
+        const pl=App.DataStore.getPracticeLog(uid);
+        const left=Math.max(0,cfg.practiceDailyRewardLimit-pl.rewardedCount);
+        return `<div class="section-card" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:15px;font-weight:bold;margin-bottom:4px">🎯 习题练习</div>
+            <div style="font-size:12px;color:var(--text-secondary)">今日 对 ${pl.todayCorrect} · 错 ${pl.todayWrong} ｜ 答对 1 题得 🌱${cfg.practiceCorrectReward}，今日还可奖励 ${left} 题</div>
+          </div>
+          <button class="btn btn-primary" onclick="App.Practice.openScopeDialog()">开始练习</button>
+        </div>`;
+      })()}
       ${App.Renderer.renderScienceCard()}
       <div class="section-card">
         <div style="font-size:15px;font-weight:bold;margin-bottom:8px">📅 ${new Date().getMonth()+1}月${new Date().getDate()}日 ${App.Utils.weekdayFull(new Date().getDay())}</div>
@@ -1648,10 +1772,22 @@ App.Renderer = {
       <div class="subject-tabs" id="qb-subject-tabs">
         ${Object.entries(bank.subjects).map(([key,s])=>`<button class="tab-btn" onclick="App.QuestionBank.selectSubject('${key}')">${s.name}（${s.textbook}）</button>`).join('')}
       </div>
+      <div class="qb-toolbar">
+        <button class="qb-practice-btn" onclick="App.Practice.openScopeDialog()">🎯 开始练习</button>
+        <span class="qb-tb-label" id="qb-today-stat"></span>
+        <span style="flex:1"></span>
+        <span class="qb-tb-label">字号</span>
+        <button class="qb-mini-btn" onclick="App.QuestionBank.zoom(-1)">A－</button>
+        <span class="qb-zoom-val" id="qb-zoom-val">100%</span>
+        <button class="qb-mini-btn" onclick="App.QuestionBank.zoom(1)">A＋</button>
+        <button class="qb-mini-btn" onclick="App.QuestionBank.expandAll(true)">展开全部</button>
+        <button class="qb-mini-btn" onclick="App.QuestionBank.expandAll(false)">收起全部</button>
+      </div>
       <div id="qb-lesson-list"></div>
       <div class="parent-action-row">
         <button class="btn btn-primary" onclick="App.QuestionBank.openImportDialog()">📥 批量导入(多格式)</button>
         <button class="btn btn-secondary" onclick="App.QuestionBank.openAddLessonDialog()">➕ 新增课文</button>
+        <button class="btn btn-secondary" onclick="App.QuestionBank.openLessonTextDialog()">📖 录入课文正文</button>
         <button class="btn btn-secondary" onclick="App.QuestionBank.openAddQuestionDialog()">✏️ 录入单题</button>
         <button class="btn btn-secondary" onclick="App.QuestionBank.openBatchAddDialog()">📝 批量录入题目</button>
         <button class="btn btn-secondary" onclick="App.QuestionBank.openCopyLessonDialog()">📋 复制课文</button>
@@ -1810,6 +1946,7 @@ App.Renderer = {
         <div style="font-size:14px;font-weight:bold;margin-bottom:6px">📋 玩法说明</div>
         <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">
           • 完成学习任务 → 获得 🌱小苗<br>
+          • 📚习题练习答对1题 → 获得 🌱小苗+${config.practiceCorrectReward}（同题每天只奖1次，每日最多${config.practiceDailyRewardLimit}题）<br>
           • 每${config.sunflowerCost}颗小苗 → 种植作物（向日葵/水稻/土豆/豌豆/棉花）<br>
           • 🌻向日葵每${config.sunflowerProduceInterval}秒自动产出☀️阳光，点击收集<br>
           • 🌾水稻/土豆/豌豆/棉花每${Math.round(config.cropProduceInterval/3600)}小时产出${config.cropProduceAmount}个<br>
@@ -1917,6 +2054,8 @@ App.Renderer = {
       cropProduceInterval:'农作物产出间隔(秒)',cropProduceAmount:'农作物每次产出量',
       collectAllToolCost:'一键收集器价格',weedAllToolCost:'一键除草剂价格',bugAllToolCost:'一键除虫剂价格',
       healthDecayPerDay:'生命值每日衰减(%)',
+      practiceCorrectReward:'习题练习答对奖励小苗',practiceDailyRewardLimit:'每日练习奖励题数上限',
+      practiceQuestionCount:'每次练习默认题目数',
     };
     let tab=App.ParentPanel.currentTab||'rules';
     return `
@@ -2180,7 +2319,13 @@ App.Sync = {
         }
         if(missing>=0){lastDiag='gist '+gistId.slice(0,8)+' 缺分片 '+missing;continue;}
         let data;
-        try{data=this._decode(parts);}catch(e){lastDiag='gist '+gistId.slice(0,8)+' 解码失败: '+e.message;continue;}
+        try{data=this._decode(parts);}catch(e){
+          // 诊断：把每片长度、拼接总长、是否一致都打到错误里，方便定位"分片被截断/不全/数据坏"
+          const lens=parts.map(p=>p.length);
+          const total=parts.join('').length;
+          lastDiag='gist '+gistId.slice(0,8)+' 解码失败: '+e.message+' | N='+N+' 各片长=['+lens.join(',')+'] 总长='+total+' 期望≈'+N+'*400000';
+          continue;
+        }
         this.setGistId(gistId);
         Object.keys(data).forEach(k=>{if(k.startsWith('dlp_'))localStorage.setItem(k,JSON.stringify(data[k]));});
         localStorage.setItem(this.LAST_KEY,new Date().toLocaleString());
@@ -2475,12 +2620,66 @@ App.Sports = {
 /* ===== 习题库模块 ===== */
 App.QuestionBank = {
   currentSubject:'chinese',
-  initPage(){this.selectSubject('chinese');},
+  ZOOMS:[0.85,1,1.15,1.35,1.6,1.9],
+  initPage(){
+    this.selectSubject('chinese');
+    this.applyZoom();
+    this.updateTodayStat();
+  },
   selectSubject(key){
     this.currentSubject=key;
     document.querySelectorAll('#qb-subject-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
     event?.target?.classList?.add('active');
     this.renderLessons();
+    this.applyZoom();
+  },
+  /* ---- 字号缩放 ---- */
+  getZoomIdx(){
+    const v=parseInt(localStorage.getItem('dlp_qb_zoom'));
+    return isNaN(v)?1:Math.max(0,Math.min(this.ZOOMS.length-1,v));
+  },
+  applyZoom(){
+    const idx=this.getZoomIdx();
+    const el=document.getElementById('qb-lesson-list');
+    if(el)el.style.setProperty('--qbz',this.ZOOMS[idx]);
+    const lab=document.getElementById('qb-zoom-val');
+    if(lab)lab.textContent=Math.round(this.ZOOMS[idx]*100)+'%';
+  },
+  zoom(dir){
+    let idx=this.getZoomIdx()+dir;
+    idx=Math.max(0,Math.min(this.ZOOMS.length-1,idx));
+    localStorage.setItem('dlp_qb_zoom',idx);
+    this.applyZoom();
+  },
+  /* ---- 年级折叠 ---- */
+  getCollapsed(){
+    try{return JSON.parse(localStorage.getItem('dlp_qb_collapsed'))||{};}catch(e){return {};}
+  },
+  saveCollapsed(c){localStorage.setItem('dlp_qb_collapsed',JSON.stringify(c));},
+  toggleGrade(g){
+    const key=this.currentSubject+'_'+g;
+    const c=this.getCollapsed();
+    c[key]=!c[key];
+    this.saveCollapsed(c);
+    const el=document.getElementById('grade-group-'+this.currentSubject+'-'+g);
+    if(el)el.classList.toggle('collapsed',!!c[key]);
+  },
+  expandAll(expand){
+    const bank=App.DataStore.getQuestionBank();
+    const subj=bank.subjects[this.currentSubject];
+    const c=this.getCollapsed();
+    if(subj)subj.lessons.forEach(l=>{c[this.currentSubject+'_'+l.grade]=!expand;});
+    this.saveCollapsed(c);
+    document.querySelectorAll('#qb-lesson-list .grade-group').forEach(el=>el.classList.toggle('collapsed',!expand));
+  },
+  updateTodayStat(){
+    const el=document.getElementById('qb-today-stat');
+    if(!el)return;
+    const uid=App.DataStore.getCurrentUserId();
+    const p=App.DataStore.getPracticeLog(uid);
+    const cfg=App.DataStore.getGameConfig().rules;
+    const left=Math.max(0,cfg.practiceDailyRewardLimit-p.rewardedCount);
+    el.innerHTML=`今日练习 对${p.todayCorrect}·错${p.todayWrong} · 答对1题得🌱${cfg.practiceCorrectReward} · 今日还可奖励 ${left} 题`;
   },
   renderLessons(){
     const bank=App.DataStore.getQuestionBank();
@@ -2499,20 +2698,33 @@ App.QuestionBank = {
     const grades=Object.keys(gradeMap).sort((a,b)=>a-b);
     const uid=App.DataStore.getCurrentUserId();
     const mistakes=App.DataStore.getMistakes(uid).mistakes;
+    const collapsed=this.getCollapsed();
+    const sk=this.currentSubject;
     container.innerHTML=grades.map(g=>{
       const lessons=gradeMap[g];
       const totalQ=lessons.reduce((s,l)=>s+l.questions.length,0);
+      const isCol=!!collapsed[sk+'_'+g];
       return `
-        <div class="grade-group">
-          <div class="grade-header">${g}年级 <span class="grade-meta">共 ${lessons.length} 课 · ${totalQ} 题</span></div>
+        <div class="grade-group ${isCol?'collapsed':''}" id="grade-group-${sk}-${g}">
+          <div class="grade-header" onclick="App.QuestionBank.toggleGrade('${g}')">
+            <span class="grade-head-left"><span class="grade-arrow">▼</span>${g}年级 <span class="grade-meta">共 ${lessons.length} 课 · ${totalQ} 题</span></span>
+            <span class="grade-head-right">
+              ${totalQ>0?`<button class="qb-practice-btn" onclick="event.stopPropagation();App.Practice.startByGrade('${sk}','${g}')">🎯 练本年级</button>`:''}
+            </span>
+          </div>
+          <div class="grade-body">
           ${lessons.map(l=>{
             const mistakeCount=mistakes.filter(m=>m.lessonId===l.lessonId&&!m.mastered).length;
             return `
               <div class="lesson-item" onclick="App.QuestionBank.toggleLesson('${l.lessonId}')">
-                <div><span class="lesson-title">第${l.lessonNumber}课 ${l.lessonTitle}</span></div>
-                <span class="lesson-count">${l.questions.length}题${mistakeCount>0?` · <span style="color:var(--mc-red)">错${mistakeCount}</span>`:''}</span>
+                <div style="flex:1;min-width:0"><span class="lesson-title">第${l.lessonNumber}课 ${App.Utils.escape(l.lessonTitle||'')}</span>${l.text?' <span style="font-size:11px;color:#8a6d00">📖有课文</span>':''}</div>
+                <span class="lesson-item-row">
+                  <span class="lesson-count">${l.questions.length}题${mistakeCount>0?` · <span style="color:var(--mc-red)">错${mistakeCount}</span>`:''}</span>
+                  ${l.questions.length>0?`<button class="qb-practice-btn" onclick="event.stopPropagation();App.Practice.startByLesson('${sk}','${l.lessonId}')">🎯</button>`:''}
+                </span>
               </div>
               <div id="lesson-detail-${l.lessonId}" style="display:none;margin-bottom:8px">
+                ${l.text?`<div class="lesson-text"><div class="lesson-text-title">📖 课文正文</div>${App.Utils.escape(l.text)}</div>`:''}
                 ${l.questions.length===0?'<div style="padding:8px;color:var(--text-secondary);font-size:13px">暂无题目，点击"录入题目"添加</div>':
                   l.questions.map(q=>`
                     <div class="q-item">
@@ -2525,12 +2737,51 @@ App.QuestionBank = {
                 }
               </div>`;
           }).join('')}
+          </div>
         </div>`;
     }).join('');
+    this.applyZoom();
   },
   toggleLesson(lid){
     const el=document.getElementById('lesson-detail-'+lid);
     if(el)el.style.display=el.style.display==='none'?'block':'none';
+  },
+  /* ---- 课文正文录入 ---- */
+  openLessonTextDialog(){
+    if(!App.ParentPanel.checkAuth()){App.ParentPanel.showLoginDialog();return;}
+    const bank=App.DataStore.getQuestionBank();
+    const subj=bank.subjects[this.currentSubject];
+    if(!subj||subj.lessons.length===0){App.Utils.toast('请先新增课文','error');return;}
+    const opts=subj.lessons.map(l=>`<option value="${l.lessonId}">${l.grade}年级 第${l.lessonNumber}课 ${App.Utils.escape(l.lessonTitle||'')}</option>`).join('');
+    App.Renderer.openModal(`
+      <h3>📖 录入课文正文</h3>
+      <div class="form-group"><label>选择课文</label><select id="lt-lesson" onchange="App.QuestionBank.loadLessonText()">${opts}</select></div>
+      <div class="form-group"><label>课文正文（可直接粘贴，保留换行）</label><textarea id="lt-text" rows="12" placeholder="粘贴课文内容..."></textarea></div>
+      <div class="modal-actions"><button class="btn btn-secondary" onclick="App.Renderer.closeModal()">取消</button><button class="btn btn-primary" onclick="App.QuestionBank.saveLessonText()">保存</button></div>
+    `);
+    this.loadLessonText();
+  },
+  loadLessonText(){
+    const lid=document.getElementById('lt-lesson')?.value;
+    const bank=App.DataStore.getQuestionBank();
+    const subj=bank.subjects[this.currentSubject];
+    const l=subj.lessons.find(x=>x.lessonId===lid);
+    const ta=document.getElementById('lt-text');
+    if(ta)ta.value=(l&&l.text)||'';
+  },
+  saveLessonText(){
+    const lid=document.getElementById('lt-lesson').value;
+    const text=document.getElementById('lt-text').value;
+    const bank=App.DataStore.getQuestionBank();
+    const subj=bank.subjects[this.currentSubject];
+    const l=subj.lessons.find(x=>x.lessonId===lid);
+    if(!l){App.Utils.toast('课文不存在','error');return;}
+    l.text=text;
+    l.updatedAt=Date.now();
+    App.DataStore.saveQuestionBank(bank);
+    App.Renderer.closeModal();
+    this.renderLessons();
+    App.Utils.toast('课文正文已保存','success');
   },
   openAddLessonDialog(){
     if(!App.ParentPanel.checkAuth()){App.ParentPanel.showLoginDialog();return;}
@@ -3047,6 +3298,377 @@ App.QuestionBank = {
     a.href=url;a.download=this.currentSubject+'_export_'+App.Utils.todayStr()+'.json';a.click();
     URL.revokeObjectURL(url);
     App.Utils.toast('已导出 '+subj.lessons.length+' 篇课文','success');
+  },
+};
+
+/* ===== 习题练习模块（答对得小苗） ===== */
+App.Practice = {
+  s:null,
+
+  /* ---------- 答案判定工具 ---------- */
+  norm(v){
+    return String(v==null?'':v).replace(/\s+/g,'')
+      .replace(/[，。！？；：、,.!?;:'"`~·\u2018\u2019\u201c\u201d（）()【】\[\]《》<>—\-_]/g,'')
+      .toLowerCase();
+  },
+  optLabel(o){
+    const m=String(o==null?'':o).match(/^\s*([A-Za-z1-9])\s*[.、．:：)）]/);
+    return m?m[1].toUpperCase():'';
+  },
+  judgeVal(v){
+    const t=this.norm(v);
+    if(['对','正确','是','√','t','true','yes','y','1'].indexOf(t)>=0)return 'T';
+    if(['错','错误','否','×','x','f','false','no','n','0'].indexOf(t)>=0)return 'F';
+    return null;
+  },
+  /* 定位选择题正确选项下标，找不到返回 -1 */
+  correctOptIdx(q){
+    if(!q.options||!q.options.length)return -1;
+    const ans=String(q.answer==null?'':q.answer).trim();
+    const na=this.norm(ans);
+    if(!na)return -1;
+    for(let i=0;i<q.options.length;i++){if(this.norm(q.options[i])===na)return i;}
+    if(/^[A-Za-z]$/.test(ans)){
+      const up=ans.toUpperCase();
+      for(let i=0;i<q.options.length;i++){if(this.optLabel(q.options[i])===up)return i;}
+      const k=up.charCodeAt(0)-65;
+      if(k>=0&&k<q.options.length)return k;
+    }
+    if(/^[1-9]$/.test(ans)){
+      for(let i=0;i<q.options.length;i++){if(this.optLabel(q.options[i])===ans)return i;}
+      const k=parseInt(ans)-1;
+      if(k>=0&&k<q.options.length)return k;
+    }
+    const lab=this.optLabel(ans);
+    if(lab){for(let i=0;i<q.options.length;i++){if(this.optLabel(q.options[i])===lab)return i;}}
+    for(let i=0;i<q.options.length;i++){
+      const body=this.norm(String(q.options[i]).replace(/^\s*[A-Za-z1-9]\s*[.、．:：)）]\s*/,''));
+      if(body&&body===na)return i;
+    }
+    return -1;
+  },
+  qKind(q){
+    if(q.options&&q.options.length>0)return 'choice';
+    if(q.type==='judge')return 'judge';
+    return 'text';
+  },
+  textRight(q,txt){
+    const na=this.norm(txt);
+    if(!na)return false;
+    const raw=String(q.answer==null?'':q.answer);
+    const alts=raw.split(/[\/|｜]|或者|或/).map(x=>this.norm(x)).filter(Boolean);
+    if(alts.indexOf(na)>=0)return true;
+    return this.norm(raw)===na;
+  },
+  isRight(q,val){
+    const kind=this.qKind(q);
+    if(kind==='choice'){
+      const ci=this.correctOptIdx(q);
+      if(ci<0)return this.textRight(q,val.text||'');
+      return val.idx===ci;
+    }
+    if(kind==='judge'){
+      const cv=this.judgeVal(q.answer);
+      return cv!==null&&val.jv===cv;
+    }
+    return this.textRight(q,val.text||'');
+  },
+  answerText(q){
+    const kind=this.qKind(q);
+    if(kind==='choice'){
+      const ci=this.correctOptIdx(q);
+      if(ci>=0)return q.options[ci];
+    }
+    if(kind==='judge'){
+      const cv=this.judgeVal(q.answer);
+      if(cv==='T')return '对';
+      if(cv==='F')return '错';
+    }
+    return String(q.answer==null?'':q.answer);
+  },
+
+  /* ---------- 取题 ---------- */
+  collect(sk,filter){
+    const bank=App.DataStore.getQuestionBank();
+    const subj=bank.subjects[sk];
+    const out=[];
+    if(!subj)return out;
+    subj.lessons.forEach(l=>{
+      if(filter&&!filter(l))return;
+      (l.questions||[]).forEach(q=>{if(q&&q.content)out.push({q,lesson:l,subject:sk});});
+    });
+    return out;
+  },
+  subjName(sk){
+    const bank=App.DataStore.getQuestionBank();
+    return (bank.subjects[sk]&&bank.subjects[sk].name)||sk;
+  },
+
+  /* ---------- 入口 ---------- */
+  startByGrade(sk,grade){
+    const items=this.collect(sk,l=>String(l.grade)===String(grade));
+    const cfg=App.DataStore.getGameConfig().rules;
+    this.begin(items,this.subjName(sk)+' · '+grade+'年级',{count:cfg.practiceQuestionCount,shuffle:true});
+  },
+  startByLesson(sk,lessonId){
+    const items=this.collect(sk,l=>l.lessonId===lessonId);
+    const lt=items.length?items[0].lesson:null;
+    this.begin(items,this.subjName(sk)+' · '+(lt?('第'+lt.lessonNumber+'课 '+(lt.lessonTitle||'')):''),{shuffle:false});
+  },
+  openScopeDialog(){
+    const bank=App.DataStore.getQuestionBank();
+    const sk=App.QuestionBank.currentSubject;
+    const cfg=App.DataStore.getGameConfig().rules;
+    const uid=App.DataStore.getCurrentUserId();
+    const p=App.DataStore.getPracticeLog(uid);
+    const left=Math.max(0,cfg.practiceDailyRewardLimit-p.rewardedCount);
+    const subjOpts=Object.entries(bank.subjects).map(([k,s])=>`<option value="${k}" ${k===sk?'selected':''}>${s.name}</option>`).join('');
+    App.Renderer.openModal(`
+      <h3>🎯 开始练习</h3>
+      <div class="pr-meta">答对 1 题得 🌱小苗 +${cfg.practiceCorrectReward}（同一题每天只奖励一次，今日还可奖励 ${left} 题）</div>
+      <div class="form-group"><label>学科</label><select id="pr-subject" onchange="App.Practice.refreshGrades()">${subjOpts}</select></div>
+      <div class="form-group"><label>范围</label><select id="pr-grade"></select></div>
+      <div class="form-group"><label>题目数量</label>
+        <select id="pr-count"><option value="5">5 题</option><option value="10" selected>10 题</option><option value="20">20 题</option><option value="0">全部</option></select>
+      </div>
+      <div class="form-group"><label>出题顺序</label>
+        <select id="pr-order"><option value="shuffle" selected>随机打乱</option><option value="order">按课次顺序</option></select>
+      </div>
+      <div class="form-group"><label style="display:flex;align-items:center;gap:6px;font-weight:normal">
+        <input type="checkbox" id="pr-onlywrong" style="width:auto"> 只练我的错题（未掌握）
+      </label></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="App.Renderer.closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="App.Practice.startFromDialog()">开始</button>
+      </div>
+    `);
+    this.refreshGrades();
+  },
+  refreshGrades(){
+    const sel=document.getElementById('pr-subject');
+    if(!sel)return;
+    const bank=App.DataStore.getQuestionBank();
+    const subj=bank.subjects[sel.value];
+    const grades=[...new Set((subj?subj.lessons:[]).filter(l=>l.questions&&l.questions.length).map(l=>l.grade))].sort((a,b)=>a-b);
+    const g=document.getElementById('pr-grade');
+    const total=(subj?subj.lessons:[]).reduce((s,l)=>s+(l.questions?l.questions.length:0),0);
+    g.innerHTML=`<option value="all">全部年级（${total} 题）</option>`+grades.map(x=>{
+      const n=subj.lessons.filter(l=>l.grade===x).reduce((s,l)=>s+l.questions.length,0);
+      return `<option value="${x}">${x}年级（${n} 题）</option>`;
+    }).join('');
+  },
+  startFromDialog(){
+    const sk=document.getElementById('pr-subject').value;
+    const gv=document.getElementById('pr-grade').value;
+    const count=parseInt(document.getElementById('pr-count').value)||0;
+    const shuffle=document.getElementById('pr-order').value==='shuffle';
+    const onlyWrong=document.getElementById('pr-onlywrong').checked;
+    const items=this.collect(sk,gv==='all'?null:(l=>String(l.grade)===String(gv)));
+    this.begin(items,this.subjName(sk)+' · '+(gv==='all'?'全部年级':gv+'年级'),{count,shuffle,onlyWrong});
+  },
+
+  /* ---------- 会话 ---------- */
+  begin(items,label,opts){
+    opts=opts||{};
+    if(!items||!items.length){App.Utils.toast('该范围下暂无题目','error');return;}
+    let list=items.slice();
+    if(opts.onlyWrong){
+      const uid=App.DataStore.getCurrentUserId();
+      const ids=App.DataStore.getMistakes(uid).mistakes.filter(m=>!m.mastered).map(m=>m.questionId);
+      list=list.filter(x=>ids.indexOf(x.q.questionId)>=0);
+      if(!list.length){App.Utils.toast('没有未掌握的错题，真棒！','success');return;}
+    }
+    if(opts.shuffle!==false){
+      for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=list[i];list[i]=list[j];list[j]=t;}
+    }else{
+      list.sort((a,b)=>a.lesson.grade-b.lesson.grade||a.lesson.lessonNumber-b.lesson.lessonNumber);
+    }
+    if(opts.count&&opts.count>0)list=list.slice(0,opts.count);
+    this.s={list,label:label||'练习',idx:0,correct:0,wrong:0,seed:0,answered:false,sel:null,jv:null,lastRight:false,lastMsg:'',startAt:Date.now(),opts};
+    this.renderQ();
+  },
+  shell(html){
+    document.getElementById('modal-layer').innerHTML=
+      `<div class="modal-overlay"><div class="modal-content pr-modal">${html}</div></div>`;
+  },
+  pick(i){
+    if(!this.s||this.s.answered)return;
+    this.s.sel=i;
+    document.querySelectorAll('.pr-opt').forEach((b,k)=>b.classList.toggle('sel',k===i));
+  },
+  pickJ(v){
+    if(!this.s||this.s.answered)return;
+    this.s.jv=v;
+    const t=document.getElementById('pr-opt-T'),f=document.getElementById('pr-opt-F');
+    if(t)t.classList.toggle('sel',v==='T');
+    if(f)f.classList.toggle('sel',v==='F');
+  },
+  renderQ(){
+    const s=this.s;if(!s)return;
+    const it=s.list[s.idx];const q=it.q;const kind=this.qKind(q);
+    const cfg=App.DataStore.getGameConfig().rules;
+    const pct=Math.round(s.idx/s.list.length*100);
+    let body='';
+    if(kind==='choice'){
+      body=`<div class="pr-opts">${q.options.map((o,i)=>
+        `<button class="pr-opt" id="pr-opt-${i}" onclick="App.Practice.pick(${i})">${App.Utils.escape(o)}</button>`).join('')}</div>`;
+    }else if(kind==='judge'){
+      body=`<div class="pr-opts">
+        <button class="pr-opt" id="pr-opt-T" onclick="App.Practice.pickJ('T')">✅ 对</button>
+        <button class="pr-opt" id="pr-opt-F" onclick="App.Practice.pickJ('F')">❌ 错</button>
+      </div>`;
+    }else{
+      body=`<input class="pr-input" id="pr-input" placeholder="在这里写答案…" onkeydown="if(event.key==='Enter'){App.Practice.submit();}">`;
+    }
+    this.shell(`
+      <div class="pr-head">
+        <span class="pr-title">🎯 ${App.Utils.escape(s.label)}</span>
+        <span class="pr-counter">${s.idx+1} / ${s.list.length}</span>
+      </div>
+      <div class="pr-bar"><div class="pr-bar-fill" style="width:${pct}%"></div></div>
+      <div class="pr-meta">${it.lesson.grade}年级 第${it.lesson.lessonNumber}课 ${App.Utils.escape(it.lesson.lessonTitle||'')} · 答对得 🌱${cfg.practiceCorrectReward} · 本次已得 🌱${s.seed}</div>
+      <div class="pr-q"><div class="pr-q-text">${App.Utils.escape(q.content)}</div></div>
+      ${body}
+      <div class="pr-actions">
+        <button class="btn btn-secondary" onclick="App.Practice.quit()">退出</button>
+        <button class="btn btn-primary" onclick="App.Practice.submit()">提交答案</button>
+      </div>
+    `);
+    if(kind==='text')setTimeout(()=>document.getElementById('pr-input')?.focus(),120);
+  },
+  submit(){
+    const s=this.s;if(!s||s.answered)return;
+    const it=s.list[s.idx];const q=it.q;const kind=this.qKind(q);
+    let val={},shown='';
+    if(kind==='choice'){
+      if(s.sel===null||s.sel===undefined){App.Utils.toast('请选择一个答案','error');return;}
+      val={idx:s.sel};shown=q.options[s.sel];
+    }else if(kind==='judge'){
+      if(!s.jv){App.Utils.toast('请选择"对"或"错"','error');return;}
+      val={jv:s.jv};shown=s.jv==='T'?'对':'错';
+    }else{
+      const t=(document.getElementById('pr-input')?.value||'').trim();
+      if(!t){App.Utils.toast('请先写答案','error');return;}
+      val={text:t};shown=t;
+    }
+    const right=this.isRight(q,val);
+    s.answered=true;
+    let fb='';
+    if(right){
+      s.correct++;
+      const r=this.award(q);
+      s.seed+=r.got;
+      fb=`<div class="pr-fb ok"><b>✅ 回答正确！</b>${r.got>0?` 获得 🌱小苗 +${r.got}`:` （${r.reason}，本题不再重复奖励）`}${q.explanation?`<br>解析：${App.Utils.escape(q.explanation)}`:''}</div>`;
+    }else{
+      s.wrong++;
+      this.penal(q,shown);
+      fb=`<div class="pr-fb no"><b>❌ 答错了</b><br>你的答案：${App.Utils.escape(shown)}<br>正确答案：<b>${App.Utils.escape(this.answerText(q))}</b>${q.explanation?`<br>解析：${App.Utils.escape(q.explanation)}`:''}<br><span style="font-size:12px">已自动加入错题本，复习掌握后可再拿小苗</span></div>`;
+    }
+    /* 标记选项对错 */
+    if(kind==='choice'){
+      const ci=this.correctOptIdx(q);
+      document.querySelectorAll('.pr-opt').forEach((b,k)=>{
+        b.classList.remove('sel');
+        if(k===ci)b.classList.add('right');
+        else if(k===s.sel&&!right)b.classList.add('wrong');
+        b.setAttribute('disabled','disabled');
+      });
+    }else if(kind==='judge'){
+      const cv=this.judgeVal(q.answer);
+      const map={T:'pr-opt-T',F:'pr-opt-F'};
+      Object.keys(map).forEach(k=>{
+        const b=document.getElementById(map[k]);
+        if(!b)return;
+        b.classList.remove('sel');
+        if(k===cv)b.classList.add('right');
+        else if(k===s.jv&&!right)b.classList.add('wrong');
+        b.setAttribute('disabled','disabled');
+      });
+    }else{
+      const inp=document.getElementById('pr-input');
+      if(inp)inp.setAttribute('disabled','disabled');
+    }
+    const acts=document.querySelector('.pr-modal .pr-actions');
+    if(acts){
+      acts.insertAdjacentHTML('beforebegin',fb);
+      const last=s.idx>=s.list.length-1;
+      acts.innerHTML=`<button class="btn btn-secondary" onclick="App.Practice.quit()">退出</button>
+        <button class="btn btn-primary" onclick="App.Practice.next()">${last?'查看成绩 🏁':'下一题 ➡'}</button>`;
+    }
+  },
+  next(){
+    const s=this.s;if(!s)return;
+    if(s.idx>=s.list.length-1){this.finish();return;}
+    s.idx++;s.answered=false;s.sel=null;s.jv=null;
+    this.renderQ();
+  },
+  award(q){
+    const uid=App.DataStore.getCurrentUserId();
+    const cfg=App.DataStore.getGameConfig().rules;
+    const p=App.DataStore.getPracticeLog(uid);
+    let got=0,reason='';
+    if(p.rewarded[q.questionId]){
+      reason='今天这题已奖励过';
+    }else if(p.rewardedCount>=cfg.practiceDailyRewardLimit){
+      reason='今日奖励题数已达上限 '+cfg.practiceDailyRewardLimit+' 题';
+    }else{
+      got=cfg.practiceCorrectReward;
+      p.rewarded[q.questionId]=1;
+      p.rewardedCount++;
+      p.totalSeedlings=(p.totalSeedlings||0)+got;
+      App.DataStore.addSeedling(uid,got);
+    }
+    p.todayCorrect++;p.totalCorrect=(p.totalCorrect||0)+1;
+    App.DataStore.savePracticeLog(uid,p);
+    return {got,reason};
+  },
+  penal(q,userAnswer){
+    const uid=App.DataStore.getCurrentUserId();
+    const p=App.DataStore.getPracticeLog(uid);
+    p.todayWrong++;p.totalWrong=(p.totalWrong||0)+1;
+    App.DataStore.savePracticeLog(uid,p);
+    try{App.DataStore.addMistake(uid,q.questionId,userAnswer);}catch(e){}
+  },
+  finish(){
+    const s=this.s;if(!s)return;
+    const uid=App.DataStore.getCurrentUserId();
+    const p=App.DataStore.getPracticeLog(uid);
+    p.history=(p.history||[]).concat([{ts:Date.now(),label:s.label,total:s.list.length,correct:s.correct,seed:s.seed}]).slice(-30);
+    App.DataStore.savePracticeLog(uid,p);
+    const rate=Math.round(s.correct/s.list.length*100);
+    const icon=rate>=90?'🏆':rate>=70?'🎉':rate>=50?'💪':'📖';
+    const word=rate>=90?'太棒了，几乎全对！':rate>=70?'做得不错，继续加油！':rate>=50?'还有进步空间，再练一组吧':'别灰心，错题已进错题本，复习一下就会啦';
+    const mins=Math.max(1,Math.round((Date.now()-s.startAt)/60000));
+    this.shell(`
+      <div class="pr-result">
+        <div class="pr-result-icon">${icon}</div>
+        <div class="pr-result-score">${s.correct} / ${s.list.length} 题正确</div>
+        <div class="pr-result-line">正确率 ${rate}% · 用时约 ${mins} 分钟</div>
+        <div class="pr-reward">🌱 本次获得小苗 +${s.seed}</div>
+        <div class="pr-result-line">${word}</div>
+        ${s.wrong>0?`<div class="pr-result-line">错 ${s.wrong} 题已加入错题本</div>`:''}
+      </div>
+      <div class="pr-actions">
+        <button class="btn btn-secondary" onclick="App.Practice.again()">🔁 再练一组</button>
+        <button class="btn btn-primary" onclick="App.Practice.close()">完成</button>
+      </div>
+    `);
+    this.lastOpts={items:null,label:s.label,opts:s.opts};
+  },
+  again(){
+    const s=this.s;
+    this.close();
+    setTimeout(()=>this.openScopeDialog(),80);
+  },
+  quit(){
+    const s=this.s;
+    if(s&&s.idx===0&&!s.answered){this.close();return;}
+    if(confirm('确定要退出练习吗？已获得的小苗会保留。'))this.close();
+  },
+  close(){
+    this.s=null;
+    App.Renderer.closeModal();
+    App.Router.handleRoute();
   },
 };
 
@@ -3631,10 +4253,11 @@ App.MistakeBook = {
     const m=mistakes.mistakes.find(x=>x.mistakeId===mistakeId);
     const ans=document.getElementById('review-answer').value.trim();
     if(!ans){App.Utils.toast('请输入答案','error');return;}
-    if(ans===m.correctAnswer||ans.toLowerCase()===String(m.correctAnswer).toLowerCase()){
+    if(ans===m.correctAnswer||ans.toLowerCase()===String(m.correctAnswer).toLowerCase()||App.Practice.norm(ans)===App.Practice.norm(m.correctAnswer)){
       App.DataStore.markMastered(uid,mistakeId);
       App.Renderer.closeModal();
-      App.Utils.toast('回答正确！已标记为掌握','success');
+      const r=App.Practice.award({questionId:m.questionId});
+      App.Utils.toast(r.got>0?('回答正确！已标记为掌握，🌱小苗 +'+r.got):('回答正确！已标记为掌握（'+r.reason+'）'),'success');
       App.Router.handleRoute();
     }else{
       m.wrongCount++;m.lastWrongAt=Date.now();m.userAnswer=ans;
