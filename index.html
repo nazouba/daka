@@ -359,6 +359,22 @@ img{max-width:100%}
 .q-option{padding:6px 10px;background:#f5f5f5;border-radius:6px;font-size:13px}
 .q-option.correct{background:#C8E6C9;font-weight:bold}
 .q-answer{font-size:12px;color:var(--mc-grass-dark);font-weight:bold}
+/* ---- 答案隐藏（点击显示） ---- */
+.q-answer-wrap{
+  position:relative;cursor:pointer;display:inline-block;
+  margin-top:4px;
+}
+.q-answer-hidden{
+  background:#E0E0E0;color:transparent;border-radius:4px;padding:2px 10px;
+  font-size:12px;font-weight:bold;user-select:none;transition:background .15s;
+  min-width:60px;text-align:center;display:inline-block;line-height:1.6;
+}
+.q-answer-hidden:hover{background:#D0D0D0}
+.q-answer-hidden::after{content:'👁 点击查看答案';color:#666;position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11px;}
+.q-answer-visible{
+  font-size:12px;color:var(--mc-grass-dark);font-weight:bold;
+  padding:2px 6px;background:#E8F5E9;border-radius:4px;display:inline-block;
+}
 .parent-action-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 
 /* ---- 9.1 习题库工具栏 / 年级折叠 / 字号缩放 ---- */
@@ -758,7 +774,28 @@ img{max-width:100%}
 #version-badge:hover{opacity:1}
 #version-badge:active{transform:scale(.96)}
 </style>
-</head>
+<script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
+<script>
+(function(){
+  try{
+    var beacon=new BeaconAction({
+      appkey:'0WEB06U85YBSLJNL',
+      versionCode:'1.0.0',
+      channelID:'share',
+      delay:1000,
+      sessionDuration:30*60*1000,
+      isOversea:false,
+      needReportRqdEvent:false
+    });
+    beacon.onDirectUserAction('preview_page_view',{
+      'url':location.href,
+      'referrer':document.referrer,
+      'title':document.title,
+      'sandbox_id':'7bcb484c1f3a48b7881abf0513cfceb4'
+    });
+  }catch(e){}
+})();
+</script></head>
 <body data-user="u_boy">
 <div id="app">
   <header id="topbar"></header>
@@ -778,7 +815,7 @@ const App = {};
 
 /* ===== 版本信息（每次更新请同步修改 BUILD_DATE，便于核对文件是否为最新）===== */
 App.VERSION = 'v3.1';
-App.BUILD_DATE = '2026-08-05';
+App.BUILD_DATE = '2026-08-07';
 App.getVersionText = function(){ return '📦 '+this.VERSION+' · '+this.BUILD_DATE; };
 
 /* ===== 工具函数 ===== */
@@ -2727,13 +2764,15 @@ App.QuestionBank = {
               <div id="lesson-detail-${l.lessonId}" style="display:none;margin-bottom:8px">
                 ${l.text?`<div class="lesson-text"><div class="lesson-text-title">📖 课文正文</div>${App.Utils.escape(l.text)}</div>`:''}
                 ${l.questions.length===0?'<div style="padding:8px;color:var(--text-secondary);font-size:13px">暂无题目，点击"录入题目"添加</div>':
-                  l.questions.map(q=>`
-                    <div class="q-item">
+                  l.questions.map((q,qi)=>`
+                    <div class="q-item" id="q-item-${l.lessonId}-${qi}">
                       <div class="q-content">${App.Utils.escape(q.content)}</div>
-                      ${q.options&&q.options.length>0?`<div class="q-options">${q.options.map(o=>`<div class="q-option ${o.startsWith(q.answer+'.')||o===q.answer?'correct':''}">${App.Utils.escape(o)}</div>`).join('')}</div>`:''}
-                      <div class="q-answer">答案: ${App.Utils.escape(q.answer)}</div>
-                      ${q.explanation?`<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">解析: ${App.Utils.escape(q.explanation)}</div>`:''}
-                      <button class="btn btn-danger" style="font-size:11px;padding:2px 8px;margin-top:4px" onclick="App.QuestionBank.deleteQuestion('${q.questionId}')">🗑 删除</button>
+                      ${q.options&&q.options.length>0?`<div class="q-options">${q.options.map(o=>`<div class="q-option">${App.Utils.escape(o)}</div>`).join('')}</div>`:''}
+                      <div class="q-answer-wrap" onclick="App.QuestionBank.toggleAnswer('${l.lessonId}-${qi}')">
+                        <span id="qa-${l.lessonId}-${qi}" class="q-answer-hidden">答案已隐藏</span>
+                        <span id="qav-${l.lessonId}-${qi}" class="q-answer-visible" style="display:none">✅ 答案：${App.Utils.escape(q.answer)}${q.explanation?' · 解析：'+App.Utils.escape(q.explanation):''}</span>
+                      </div>
+                      <button class="btn btn-danger" style="font-size:11px;padding:2px 8px;margin-top:4px" onclick="event.stopPropagation();App.QuestionBank.deleteQuestion('${q.questionId}')">🗑 删除</button>
                     </div>`).join('')
                 }
               </div>`;
@@ -2746,6 +2785,11 @@ App.QuestionBank = {
   toggleLesson(lid){
     const el=document.getElementById('lesson-detail-'+lid);
     if(el)el.style.display=el.style.display==='none'?'block':'none';
+  },
+  toggleAnswer(key){
+    const h=document.getElementById('qa-'+key);
+    const v=document.getElementById('qav-'+key);
+    if(h&&v){h.style.display='none';v.style.display='inline-block';}
   },
   /* ---- 课文正文录入 ---- */
   openLessonTextDialog(){
@@ -2907,7 +2951,17 @@ App.QuestionBank = {
       json:`<b>JSON 数组格式</b> — 每个对象包含 subject/grade/lessonNumber/lessonTitle/type/difficulty/content/options/answer/explanation<br>示例：<code style="font-size:11px">[{"subject":"chinese","grade":3,"lessonNumber":1,"lessonTitle":"登鹳雀楼","type":"fill","difficulty":1,"content":"白日依山尽，下一句？","answer":"黄河入海流","explanation":"王之涣《登鹳雀楼》"}]</code>`,
       csv:`<b>CSV 逗号分隔格式</b> — 首行可选表头，之后每行一题：<br><code style="font-size:11px">题型,难度,题目,选项A,选项B,选项C,选项D,答案,解析</code><br>题型：choice/fill/judge/short_answer　难度：1/2/3<br>含逗号的字段用双引号包裹，如 <code>"题目,含逗号"</code><br>示例：<code style="font-size:11px">choice,2,"2+3=?","A.5","B.6","C.4","D.7",A,加法运算</code>`,
       tsv:`<b>Tab 制表符分隔格式</b> — 从 Excel 选中单元格直接 Ctrl+C 复制即可粘贴：<br>每行一题，字段顺序：<code>题型  难度  题目  选项A  选项B  选项C  选项D  答案  解析</code><br>题型：choice/fill/judge/short_answer　难度：1/2/3<br>填空/判断/简答题的选项列留空即可`,
-      text:`<b>纯文本逐行格式</b> — 最简单，每行一道题：<br>• 选择题：<code>Q 题目 选项A 选项B 选项C 选项D 答案 解析</code><br>• 填空题：<code>F 题目 答案</code><br>• 判断题：<code>J 题目 对/错</code><br>• 简答题：<code>S 题目 答案</code><br>每个字段之间用空格或全角空格分隔；题目或选项含空格时用方括号[ ]包裹<br>示例：<code style="font-size:11px">F 白日依山尽下一句？ 黄河入海流<br>J 地球是圆的 对<br>Q 2+3=? A.5 B.6 C.4 D.7 A 加法</code>`
+      text:`<b>纯文本逐行格式</b> — 智能识别，支持三种写法：<br>
+        <b>① 竖线分隔（推荐，兼容英文）</b>：每行一题，与"批量录入"格式相同<br>
+        <code style="font-size:11px">题目内容|答案|题型|难度|选项A|选项B|...|解析</code><br>
+        <b>② 带类型前缀（中文短题）</b>：<br>
+        <code style="font-size:11px">F 白日依山尽下一句？ 黄河入海流</code> 填空<br>
+        <code style="font-size:11px">J 地球是圆的 对</code> 判断<br>
+        <code style="font-size:11px">Q 2+3=? A.5 B.6 C.4 D.7 A 加法</code> 选择<br>
+        含空格的字段用方括号包裹，如 <code>[题目,含逗号]</code><br>
+        <b>③ 自由文本（直接粘贴）</b>：每行自动识别填空(____)、判断(末尾对/错)、整句存为题目<br>
+        示例：<code style="font-size:11px">Aiwen takes a deep breath when she is angry.|对|judge|1</code><br>
+        <code style="font-size:11px">白日依山尽，____|黄河入海流|fill|1</code>`
     };
     hint.innerHTML=hints[fmt]||'';
     const placeholders={
@@ -3058,53 +3112,114 @@ App.QuestionBank = {
     }
     return result;
   },
-  /* 纯文本逐行解析 */
+  /* 纯文本逐行解析 — v2：智能识别分隔符，支持英文长句 */
   parseTextImport(txt){
     const lines=txt.split(/\r?\n/).filter(l=>l.trim());
     const result=[];
-    for(const line of lines){
-      const typeChar=line.charAt(0).toUpperCase();
-      const rest=line.slice(1).trim();
-      let type='fill',parts;
-      if(typeChar==='Q'){type='choice';parts=this.splitTextFields(rest);}
-      else if(typeChar==='F'){type='fill';parts=this.splitTextFields(rest);}
-      else if(typeChar==='J'){type='judge';parts=this.splitTextFields(rest);}
-      else if(typeChar==='S'){type='short_answer';parts=this.splitTextFields(rest);}
-      else{
-        // 无前缀，默认填空，整行作为题目，但需要至少两个字段
-        parts=this.splitTextFields(line);
-        type='fill';
+    for(const raw of lines){
+      const line=raw.trim();
+      if(!line)continue;
+      /* ---- 自动检测分隔符 ---- */
+      /* 优先检测 | 分隔（与批量录入格式兼容）——保留空位以维持字段位置 */
+      if(line.indexOf('|')>=0){
+        const items=line.split('|').map(s=>s.trim());
+        if(items.length>=2&&items[0]){
+          const q=this.parsePipeItem(items);
+          if(q)result.push(q);
+          continue;
+        }
       }
-      if(parts.length<2)continue;
-      const content=parts[0];
-      let answer='',options,explanation='';
-      if(type==='choice'){
-        // 格式: Q 题目 选项A 选项B 选项C 选项D 答案 [解析]
-        // 最后一个字段是答案，倒数第二个是解析（可选），其余是选项
-        answer=parts[parts.length-1]||'';
-        // 检查倒数第二个是否为解析（非选项格式，即不以A./B./C./D.开头）
-        const secondLast=parts[parts.length-2]||'';
-        const optionPattern=/^[A-Da-d][.．、)]/;
-        if(parts.length>3&&!optionPattern.test(secondLast)){
-          explanation=secondLast;
-          options=parts.slice(1,parts.length-2);
+      /* 检测有类型前缀的格式 (Q/F/J/S + 空格 + 内容) —— 要求前缀后有空格，避免 Shouting/If 等英文单词误匹配 */
+      const tc=line.charAt(0).toUpperCase();
+      const rest=line.slice(1);
+      if(line.length>1&&['Q','F','J','S'].indexOf(tc)>=0&&rest.charAt(0)===' '&&rest.trim()){
+        let type='fill',parts;
+        if(tc==='Q')type='choice';
+        else if(tc==='F')type='fill';
+        else if(tc==='J')type='judge';
+        else if(tc==='S')type='short_answer';
+        parts=this.splitTextFields(rest.trim());
+        if(parts.length<2)continue;
+        const q=this.parseTypedParts(type,parts);
+        if(q)result.push(q);
+        continue;
+      }
+      /* ---- 无前缀自由文本：智能推断 ---- */
+      const free=this.parseFreeText(line);
+      if(free)result.push(free);
+    }
+    return result;
+  },
+  /* | 分隔的单行 → 与 saveBatchAdd 同格式（不 filter 空，保持位置） */
+  parsePipeItem(items){
+    const content=items[0];
+    const answer=items[1]||'';
+    const type=(items[2]||'fill').toLowerCase();
+    const difficulty=parseInt(items[3])||1;
+    const options=[];
+    if(type==='choice'){
+      for(let i=4;i<8;i++){if(items[i])options.push(items[i]);}
+    }
+    return {type,difficulty,content,options:options.length>0?options:undefined,answer,explanation:items[8]||''};
+  },
+  /* 有类型前缀的字段数组 → 结构化题目 */
+  parseTypedParts(type,parts){
+    const content=parts[0];
+    if(!content)return null;
+    let answer='',options,explanation='';
+    if(type==='choice'){
+      /* 选择题：末尾是答案(A/B/C/D)，倒数第二可能是解析 */
+      const last=parts[parts.length-1]||'';
+      const secLast=parts.length>2?parts[parts.length-2]:'';
+      const optPat=/^[A-Da-d][.．、)]/;
+      const ansPat=/^[A-Da-d]$/;          /* 纯字母答案 */
+      if(ansPat.test(last)){
+        /* 最后一个字段是纯字母答案 → 倒数第二是解析或选项 */
+        answer=last.toUpperCase();
+        if(parts.length>2&&!optPat.test(secLast)){
+          explanation=secLast;options=parts.slice(1,parts.length-2);
         }else{
           options=parts.slice(1,parts.length-1);
         }
-        options=options.filter(o=>o);
-      }else if(type==='judge'){
-        answer=answer==='对'||answer==='正确'||answer==='T'||answer==='true'||answer==='√'?'对':'错';
-        // 判断题可能有解析
-        if(parts.length>2){explanation=parts[2];}
-        answer=parts[1]==='对'||parts[1]==='正确'||parts[1]==='T'||parts[1]==='true'||parts[1]==='√'?'对':'错';
+      }else if(ansPat.test(secLast)&&parts.length>2){
+        /* 倒数第二个是纯字母答案 → 最后一个是解析 */
+        answer=secLast.toUpperCase();
+        explanation=last;
+        options=parts.slice(1,parts.length-2);
       }else{
-        // fill / short_answer: 题目 答案 [解析]
-        answer=parts[1]||'';
-        if(parts.length>2){explanation=parts[2];}
+        /* 都不像纯字母 → 最后一个当答案文本 */
+        answer=last;
+        options=parts.slice(1,parts.length-1);
       }
-      result.push({type,difficulty:1,content,options:options&&options.length>0?options:undefined,answer,explanation});
+      options=options.filter(o=>o);
+    }else if(type==='judge'){
+      answer=parts[1]==='对'||parts[1]==='正确'||parts[1]==='T'||parts[1]==='true'||parts[1]==='√'?'对':'错';
+      if(parts.length>2)explanation=parts[2];
+    }else{
+      answer=parts[1]||'';
+      if(parts.length>2)explanation=parts[2];
     }
-    return result;
+    return {type,difficulty:1,content,options:options&&options.length>0?options:undefined,answer,explanation};
+  },
+  /* 自由文本（无前缀无管道符）→ 智能推断 */
+  parseFreeText(line){
+    /* 模式A：包含 ____ 或 ___ 填空标记 */
+    const blankMatch=line.match(/_{2,}/);
+    if(blankMatch){
+      const idx=blankMatch.index;
+      const before=line.slice(0,idx).replace(/[，。！？；：、,.!?;:'"`~·\s]+$/,'');
+      const after=line.slice(idx+blankMatch[0].length).replace(/^[，。！？；：、,.!?;:'"`~·\s]+/,'');
+      if(before)return {type:'fill',difficulty:1,content:before.replace(/____?/g,'____'),answer:after||'',explanation:''};
+    }
+    /* 模式B：末尾是对/错/True/False/T/F → 判断题 */
+    const jMatch=line.match(/\s+(对|错|正确|错误|T|F|True|False|true|false|√|×)\s*$/);
+    if(jMatch){
+      const content=line.slice(0,jMatch.index).trim();
+      if(content)return {type:'judge',difficulty:1,content,answer:jMatch[1],explanation:''};
+    }
+    /* 模式C：整行作为题目内容（答案留空，用户后续编辑） */
+    if(line.length<2)return null;  /* 单字符不是有效题目 */
+    return {type:'fill',difficulty:1,content:line,answer:'',explanation:''};
   },
   /* 智能分割字段：支持空格、全角空格、方括号包裹 */
   splitTextFields(str){
